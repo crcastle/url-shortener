@@ -47,11 +47,13 @@ const authMiddleware = createMiddleware<Env>(async (c, next) => {
 
 app.all('*', renderer);
 
+// Custom 404 response
 app.notFound((c) => {
   const message = c.get('errorMessage');
   return c.text(message ?? '404 Not Found', 404);
 });
 
+// Custom response for errors
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
     const resp = err.getResponse();
@@ -66,6 +68,9 @@ app.onError((err, c) => {
   return c.text('Server Error', 500);
 });
 
+// Overly complex regex matches strings of length KEY_LENGTH
+// that include characters a-z, A-Z, and 0-9
+// but exclude zero, cap O, lower O, cap I, lower L, and 1
 app.get(`/:key{^(?!.*[0OoIl1])[a-zA-Z0-9]{${KEY_LENGTH}}$}`, async (c) => {
   const key = c.req.param('key');
   const url = await c.env.URL_SHORTENER.get(key);
