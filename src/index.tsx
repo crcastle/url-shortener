@@ -4,6 +4,7 @@ import { zValidator } from '@hono/zod-validator';
 import { csrf } from 'hono/csrf';
 import { basicAuth } from 'hono/basic-auth';
 import { HTTPException } from 'hono/http-exception';
+import { createMiddleware } from 'hono/factory';
 
 import { renderer } from './renderer'
 
@@ -17,6 +18,11 @@ type Variables = {
   errorMessage: string
 }
 
+type Env = {
+  Bindings: Bindings
+  Variables: Variables
+}
+
 // Uses "base56" character set, which excludes the following to remove ambiguity
 // - number 0
 // - number 1
@@ -28,10 +34,16 @@ const BASE_56_KEY_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvw
 // A 4 character key provides 9.8 million unique keys
 const KEY_LENGTH = 4;
 
-const app = new Hono<{
-  Bindings: Bindings
-  Variables: Variables
-}>();
+const app = new Hono<Env>();
+
+const authMiddleware = createMiddleware<Env>(async (c, next) => {
+  const auth = basicAuth({
+    username: c.env.USER,
+    password: c.env.PASS,
+  });
+
+  return auth(c, next);
+});
 
 app.all('*', renderer);
 
@@ -66,16 +78,7 @@ app.get(`/:key{^(?!.*[0OoIl1])[a-zA-Z0-9]{${KEY_LENGTH}}$}`, async (c) => {
   return c.redirect(url, 301);
 });
 
-app.get('/', async (c, next) => {
-  const auth = basicAuth({
-    username: c.env.USER,
-    password: c.env.PASS,
-  });
-
-  return auth(c, next);
-});
-
-app.get('/', (c) => {
+app.get('/', authMiddleware, (c) => {
   return c.render(
     <div>
       <h2>Enter URL to shorten</h2>
@@ -128,17 +131,9 @@ const createKey = async (kv: KVNamespace, url: string): Promise<string> => {
   return key;
 }
 
-app.post('/create', async (c, next) => {
-  const auth = basicAuth({
-    username: c.env.USER,
-    password: c.env.PASS,
-  });
-
-  return auth(c, next);
-});
-
 app.post(
   '/create',
+  authMiddleware,
   csrf(),
   validator,
   async (c) => {
