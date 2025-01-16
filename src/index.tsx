@@ -5,7 +5,7 @@ import { HTTPException } from 'hono/http-exception';
 import { renderer } from './renderer'
 import { validator } from './lib/validation';
 import { authMiddleware } from './lib/middleware';
-import { createKey, keyRegex } from './lib/cloudflare';
+import { createKey, keyRegex, listKeys } from './lib/cloudflare';
 
 const app = new Hono<Env>();
 
@@ -48,6 +48,16 @@ app.get('/', authMiddleware, (c) => {
       </form>
     </div>
   );
+});
+
+/**
+ * Get JSON list of existing short URLs
+ * Requires auth
+ */
+app.get('/list', authMiddleware, async (c) => {
+  const pairs = await listKeys(c.env.URL_SHORTENER);
+
+  return c.json(pairs);
 });
 
 /**

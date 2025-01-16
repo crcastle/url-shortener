@@ -38,3 +38,17 @@ export const createKey = async (kv: KVNamespace, url: string): Promise<string> =
 
   return key;
 }
+
+export const listKeys = async (kv: KVNamespace): Promise<Record<string, string>> => {
+  const keyList = await kv.list();
+
+  const resp: Record<string, string> = {}
+  for (const key of keyList.keys) {
+    const value = await kv.get(key.name);
+    if (value) {
+      resp[key.name] = value;
+    }
+  }
+
+  return resp;
+}
