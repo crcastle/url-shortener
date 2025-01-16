@@ -6,6 +6,9 @@ compatibility_flags = ["nodejs_compat"]
 # [vars]
 # MY_VAR = "my-variable"
 
+[vars]
+CLOUDFLARE_ACCOUNT_ID = "f1fcf5d3ced88a2c5fd17f922883dead"
+
 # [[kv_namespaces]]
 # binding = "MY_KV_NAMESPACE"
 # id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -14,6 +17,10 @@ compatibility_flags = ["nodejs_compat"]
 binding = "URL_SHORTENER"
 id = "bb6d1324193d4c86bdbe46b0033837fd"
 preview_id = "559964fc399245f0bbd97066633329c9"
+
+[[analytics_engine_datasets]]
+binding = "TRACKER"
+dataset = "link_clicks"
 
 # [[r2_buckets]]
 # binding = "MY_BUCKET"

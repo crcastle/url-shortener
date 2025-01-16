@@ -23,6 +23,27 @@ app.get(`/:key{${keyRegex}}`, async (c) => {
     return c.notFound();
   }
 
+  const cfProperties = c.req.raw.cf;
+  if (cfProperties && c.env.TRACKER) {
+    c.env.TRACKER.writeDataPoint({
+      blobs: [
+        key as string,
+        url as string,
+        cfProperties.city as string,
+        cfProperties.country as string,
+        cfProperties.region as string,
+        cfProperties.regionCode as string,
+        cfProperties.timezone as string,
+      ],
+      doubles: [
+        cfProperties.longitude as number,
+        cfProperties.latitude as number,
+      ],
+      indexes: [key as string],
+    });
+    console.log(`Redirect to ${url} from ${cfProperties.city}`);
+  }
+
   return c.redirect(url, 301);
 });
 
