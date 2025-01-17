@@ -67,18 +67,37 @@ app.get('/', authMiddleware, (c) => {
         &nbsp;
         <button type="submit">Create</button>
       </form>
+      <hr />
+      <div hx-get="/list" hx-trigger="load">
+        <p>Loading...</p>
+      </div>
     </div>
   );
 });
 
 /**
- * Get JSON list of existing short URLs
+ * Get HTML table of existing short URLs
  * Requires auth
  */
 app.get('/list', authMiddleware, async (c) => {
   const pairs = await listKeys(c.env.URL_SHORTENER);
 
-  return c.json(pairs);
+  return c.html(
+    <table>
+      <caption>Live Short URLs</caption>
+      <thead>
+        <tr>
+          <th>Short URL</th>
+          <th>Redirects to</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Object.entries(pairs).map(([key, value]) => <tr key={key}><td><a href={"/" + key}>{key}</a></td><td>{value}</td></tr>)}
+      </tbody>
+    </table>
+  )
+
+  // return c.json(pairs);
 });
 
 /**
