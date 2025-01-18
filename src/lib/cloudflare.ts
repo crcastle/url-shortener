@@ -52,3 +52,28 @@ export const listKeys = async (kv: KVNamespace): Promise<Record<string, string>>
 
   return resp;
 }
+
+export const queryAnalyticsEngine = async (env: Bindings, sql: string): Promise<Record<string, number>> => {
+  const url = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/analytics_engine/sql`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.ANALYTICS_API_TOKEN}`,
+    },
+    body: sql,
+  });
+
+  const json = await resp.json();
+
+  //@ts-expect-error
+  return normalizeData(json.data);
+}
+
+const normalizeData = (data: AnalyticsData) => {
+  const normalized: Record<string, number> = {};
+  for (const dataPoint of data) {
+    normalized[dataPoint.index1] = parseInt(dataPoint['sum(_sample_interval)']);
+  }
+
+  return normalized;
+}

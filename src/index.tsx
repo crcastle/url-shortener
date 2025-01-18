@@ -5,7 +5,7 @@ import { HTTPException } from 'hono/http-exception';
 import { renderer } from './renderer'
 import { validator } from './lib/validation';
 import { authMiddleware } from './lib/middleware';
-import { createKey, keyRegex, listKeys } from './lib/cloudflare';
+import { createKey, keyRegex, listKeys, queryAnalyticsEngine } from './lib/cloudflare';
 
 const app = new Hono<Env>();
 
@@ -82,6 +82,14 @@ app.get('/', authMiddleware, (c) => {
 app.get('/list', authMiddleware, async (c) => {
   const pairs = await listKeys(c.env.URL_SHORTENER);
 
+  const query = `
+          SELECT
+            index1,
+            sum(_sample_interval)
+          FROM link_clicks
+          GROUP BY index1`;
+  const clicks = await queryAnalyticsEngine(c.env, query);
+
   return c.html(
     <table>
       <caption>Live Short URLs</caption>
@@ -89,15 +97,23 @@ app.get('/list', authMiddleware, async (c) => {
         <tr>
           <th>Short URL</th>
           <th>Redirects to</th>
+          <th>Clicks</th>
         </tr>
       </thead>
       <tbody>
-        {Object.entries(pairs).map(([key, value]) => <tr key={key}><td><a href={"/" + key}>{key}</a></td><td>{value}</td></tr>)}
+        {Object.entries(pairs).map(([key, value]) => {
+            return (
+              <tr key={key}>
+                <td><a href={"/" + key}>{key}</a></td>
+                <td>{value}</td>
+                <td>{clicks[key] ?? 0}</td>
+              </tr>
+            );
+          }
+        )}
       </tbody>
     </table>
   )
-
-  // return c.json(pairs);
 });
 
 /**
