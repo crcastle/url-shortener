@@ -17,6 +17,6 @@ type Env = {
 }
 
 type AnalyticsData = Array<{
-  index1: string
-  "sum(_sample_interval)": string
+  key: string
+  click_count: string
 }>

@@ -72,7 +72,7 @@ export const queryAnalyticsEngine = async (env: Bindings, sql: string): Promise<
 const normalizeData = (data: AnalyticsData) => {
   const normalized: Record<string, number> = {};
   for (const dataPoint of data) {
-    normalized[dataPoint.index1] = parseInt(dataPoint['sum(_sample_interval)']);
+    normalized[dataPoint.key] = parseInt(dataPoint.click_count);
   }
 
   return normalized;

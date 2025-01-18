@@ -84,8 +84,8 @@ app.get('/list', authMiddleware, async (c) => {
 
   const query = `
           SELECT
-            index1,
-            sum(_sample_interval)
+            index1 as key,
+            sum(_sample_interval) as click_count
           FROM link_clicks
           GROUP BY index1`;
   const clicks = await queryAnalyticsEngine(c.env, query);
