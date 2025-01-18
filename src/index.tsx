@@ -44,7 +44,7 @@ app.get(`/:key{${keyRegex}}`, async (c) => {
     console.log(`Redirect to ${url} from ${cfProperties.city}`);
   }
 
-  return c.redirect(url, 301);
+  return c.redirect(url, 302);
 });
 
 /**
