@@ -5,7 +5,7 @@ import { HTTPException } from 'hono/http-exception';
 import { renderer } from './renderer'
 import { validator } from './lib/validation';
 import { authMiddleware } from './lib/middleware';
-import { createKey, keyRegex, listKeys, queryAnalyticsEngine } from './lib/cloudflare';
+import { createKey, keyRegex, listKeys, queryClickCounts, queryLinkStats } from './lib/cloudflare';
 
 const app = new Hono<Env>();
 
@@ -55,7 +55,7 @@ app.get('/', authMiddleware, (c) => {
   return c.render(
     <div>
       <h2>Enter URL to shorten</h2>
-      <form action="/create" method="post">
+      <form action="/links" method="post">
         <input
           type="text"
           name="url"
@@ -68,7 +68,7 @@ app.get('/', authMiddleware, (c) => {
         <button type="submit">Create</button>
       </form>
       <hr />
-      <div hx-get="/list" hx-trigger="load">
+      <div hx-get="/links" hx-trigger="load">
         <p>Loading...</p>
       </div>
     </div>
@@ -79,16 +79,10 @@ app.get('/', authMiddleware, (c) => {
  * Get HTML table of existing short URLs
  * Requires auth
  */
-app.get('/list', authMiddleware, async (c) => {
+app.get('/links', authMiddleware, async (c) => {
   const pairs = await listKeys(c.env.URL_SHORTENER);
 
-  const query = `
-          SELECT
-            index1 as key,
-            sum(_sample_interval) as click_count
-          FROM link_clicks
-          GROUP BY index1`;
-  const clicks = await queryAnalyticsEngine(c.env, query);
+  const clicks = await queryClickCounts(c.env);
 
   return c.html(
     <table>
@@ -101,13 +95,16 @@ app.get('/list', authMiddleware, async (c) => {
         </tr>
       </thead>
       <tbody>
-        {Object.entries(pairs).map(([key, value]) => {
+        {Object.entries(pairs).map(([key, value], idx) => {
             return (
-              <tr key={key}>
-                <td><a href={"/" + key}>{key}</a></td>
-                <td>{value}</td>
-                <td>{clicks[key] ?? 0}</td>
-              </tr>
+              <>
+                <tr key={key} hx-get={"/links/" + key} hx-trigger="click" hx-target={"#panel" + idx}>
+                  <td><a href={"/" + key}>{key}</a></td>
+                  <td>{value}</td>
+                  <td>{clicks[key] ?? 0}</td>
+                </tr>
+                <tr class="panel"><td id={"panel" + idx} colspan={3} style="text-align: right; font-family: 'Lucida Console', Courier, monospaced;">&nbsp;</td></tr>
+              </>
             );
           }
         )}
@@ -116,12 +113,38 @@ app.get('/list', authMiddleware, async (c) => {
   )
 });
 
+app.get(`/links/:key{${keyRegex}}`, authMiddleware, async (c) => {
+  const key = c.req.param('key');
+
+  let linkStats;
+  try {
+    linkStats = await queryLinkStats(c.env, key);
+  } catch (err) {
+    console.error(err);
+
+    let message: string;
+    if (err instanceof Error) {
+      message = err.message;
+    } else {
+      message = 'Unknown error';
+    }
+
+    throw new HTTPException(500, { message, cause: err });
+  }
+
+  return c.html(
+    <>
+      {linkStats.map(s => <>{s.city}, {s.regionCode}, {s.country} = {s.click_count}<br/></>)}
+    </>
+  );
+});
+
 /**
  * Create a new short link
  * Requires auth
  */
 app.post(
-  '/create',
+  '/links',
   authMiddleware,
   csrf(),
   validator,
@@ -166,7 +189,7 @@ app.onError((err, c) => {
   }
 
   // Otherwise return generic error
-  return c.text('Server Error', 500);
+  return c.text(err.message, 500);
 });
 
 export default app

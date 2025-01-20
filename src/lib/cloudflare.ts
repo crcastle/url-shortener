@@ -53,7 +53,7 @@ export const listKeys = async (kv: KVNamespace): Promise<Record<string, string>>
   return resp;
 }
 
-export const queryAnalyticsEngine = async (env: Bindings, sql: string): Promise<Record<string, number>> => {
+const queryAnalyticsEngine = async (env: Bindings, sql: string): Promise<object[]> => {
   const url = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/analytics_engine/sql`;
   const resp = await fetch(url, {
     method: 'POST',
@@ -63,17 +63,52 @@ export const queryAnalyticsEngine = async (env: Bindings, sql: string): Promise<
     body: sql,
   });
 
+  if (!resp.ok) {
+    console.log('asgaf');
+    throw new Error(await resp.text());
+  }
+
   const json = await resp.json();
 
   //@ts-expect-error
-  return normalizeData(json.data);
+  return json.data;
 }
 
-const normalizeData = (data: AnalyticsData) => {
+const normalizeData = (data: Array<{ key: string, click_count: string}>) => {
   const normalized: Record<string, number> = {};
   for (const dataPoint of data) {
     normalized[dataPoint.key] = parseInt(dataPoint.click_count);
   }
 
   return normalized;
+}
+
+export const queryClickCounts = async (env: Bindings) => {
+  const query = `
+          SELECT
+            index1 as key,
+            sum(_sample_interval) as click_count
+          FROM link_clicks
+          GROUP BY key`;
+
+  const result = await queryAnalyticsEngine(env, query) as Array<{ key: string, click_count: string }>;
+
+  return normalizeData(result);
+}
+
+export const queryLinkStats = async (env: Bindings, key: string) => {
+  const query = `
+          SELECT
+            index1 as key,
+            blob3 as city,
+            blob6 as regionCode,
+            blob4 as country,
+            sum(_sample_interval) as click_count
+          FROM link_clicks
+          WHERE index1 = '${key}'
+          GROUP BY key, city, regionCode, country`;
+
+  const result = await queryAnalyticsEngine(env, query) as Array<{ key: string, city: string, regionCode: string, country: string, click_count: string }>;
+
+  return result;
 }
