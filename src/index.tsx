@@ -95,15 +95,19 @@ app.get('/links', authMiddleware, async (c) => {
         </tr>
       </thead>
       <tbody>
-        {Object.entries(pairs).map(([key, value], idx) => {
+        {Object.entries(pairs).map(([key, value]) => {
             return (
               <>
-                <tr key={key} hx-get={"/links/" + key} hx-trigger="click" hx-target={"#panel" + idx}>
+                <tr key={key} hx-get={"/links/" + key} hx-trigger="click" hx-target="next div" hx-swap="outerHTML">
                   <td><a href={"/" + key}>{key}</a></td>
                   <td>{value}</td>
                   <td>{clicks[key] ?? 0}</td>
                 </tr>
-                <tr class="panel"><td id={"panel" + idx} colspan={3} style="text-align: right; font-family: 'Lucida Console', Courier, monospaced;">&nbsp;</td></tr>
+                <tr>
+                  <td colspan={3} style="padding-top: 0; padding-bottom: 0;">
+                    <div id={"panel-" + key} class="panel"></div>
+                  </td>
+                </tr>
               </>
             );
           }
@@ -133,9 +137,9 @@ app.get(`/links/:key{${keyRegex}}`, authMiddleware, async (c) => {
   }
 
   return c.html(
-    <>
+    <div id={"panel-" + key} class="panel active">
       {linkStats.map(s => <>{s.city}, {s.regionCode}, {s.country} = {s.click_count}<br/></>)}
-    </>
+    </div>
   );
 });
 
