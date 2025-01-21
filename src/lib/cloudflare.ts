@@ -106,7 +106,8 @@ export const queryLinkStats = async (env: Bindings, key: string) => {
             sum(_sample_interval) as click_count
           FROM link_clicks
           WHERE index1 = '${key}'
-          GROUP BY key, city, regionCode, country`;
+          GROUP BY key, city, regionCode, country
+          ORDER BY click_count DESC`;
 
   const result = await queryAnalyticsEngine(env, query) as Array<{ key: string, city: string, regionCode: string, country: string, click_count: string }>;
 
