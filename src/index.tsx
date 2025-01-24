@@ -23,6 +23,7 @@ app.get(`/:key{${keyRegex}}`, async (c) => {
     return c.notFound();
   }
 
+  // Log data about the redirect
   const cfProperties = c.req.raw.cf;
   if (cfProperties && c.env.TRACKER) {
     c.env.TRACKER.writeDataPoint({
@@ -58,10 +59,22 @@ app.get('/', authMiddleware, (c) => {
       <form action="/links" method="post">
         <input
           type="text"
+          name="userProvidedKey"
+          autocomplete="off"
+          spellcheck={false}
+          placeholder="optional"
+          style={{
+            width: '15%'
+          }}
+        />
+        &nbsp;&nbsp;→&nbsp;&nbsp;
+        <input
+          type="text"
           name="url"
           autocomplete="off"
+          placeholder="Destination URL"
           style={{
-            width: '80%'
+            width: '65%'
           }}
         />
         &nbsp;
@@ -153,9 +166,9 @@ app.post(
   csrf(),
   validator,
   async (c) => {
-    const { url } = c.req.valid('form');
+    const { url, userProvidedKey } = c.req.valid('form');
 
-    const key = await createKey(c.env.URL_SHORTENER, url);
+    const key = await createKey(c.env.URL_SHORTENER, url, userProvidedKey);
 
     const shortUrl = new URL(`/${key}`, c.req.url);
 
@@ -189,6 +202,16 @@ app.onError((err, c) => {
     // Handle basic auth challenge correctly
     if (resp.status === 401) {
       return resp;
+    }
+
+    if (resp.status === 400) {
+      return c.render(
+        <div>
+          <h2>Error</h2>
+          <p>{err.message}</p>
+          <a href="/">Back</a>
+        </div>
+      );
     }
   }
 

@@ -3,6 +3,9 @@
 // - number 1
 // - upper and lower case O
 // - upper and lower case I
+
+import { HTTPException } from "hono/http-exception";
+
 // See https://en.wikipedia.org/wiki/Binary-to-text_encoding#Encoding_standards
 const BASE_56_KEY_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz";
 
@@ -19,21 +22,32 @@ export const keyRegex = `^(?!.*[0OoIl1])[a-zA-Z0-9]{${KEY_LENGTH}}$`;
  * 
  * @param kv Namespace in which to create key/value pair
  * @param url URL to associate with new key
+ * @param userProvidedKey Key provided by user. Format already validated.
  * @returns 
  */
-export const createKey = async (kv: KVNamespace, url: string): Promise<string> => {
+export const createKey = async (kv: KVNamespace, url: string, userProvidedKey?: string): Promise<string> => {
   let key = "";
-  for (let i = 0; i < KEY_LENGTH; i++) {
-    const randomIndex = Math.floor(Math.random() * BASE_56_KEY_CHARS.length);
-    key += BASE_56_KEY_CHARS.charAt(randomIndex);
-  }
-
-  const result = await kv.get(key);
-
-  if (!result) {
-    await kv.put(key, url);
+  if (userProvidedKey) {
+    const result = await kv.get(userProvidedKey);
+    if (!result) {
+      await kv.put(userProvidedKey, url);
+      key = userProvidedKey;
+    } else {
+      throw new HTTPException(400, { message: "Key already exists" });
+    }
   } else {
-    return await createKey(kv, url);
+    // Generate a key
+    for (let i = 0; i < KEY_LENGTH; i++) {
+      const randomIndex = Math.floor(Math.random() * BASE_56_KEY_CHARS.length);
+      key += BASE_56_KEY_CHARS.charAt(randomIndex);
+    }
+
+    const result = await kv.get(key);
+    if (!result) {
+      await kv.put(key, url);
+    } else {
+      return await createKey(kv, url);
+    }
   }
 
   return key;
