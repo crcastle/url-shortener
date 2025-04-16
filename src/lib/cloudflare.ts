@@ -7,7 +7,8 @@
 import { HTTPException } from "hono/http-exception";
 
 // See https://en.wikipedia.org/wiki/Binary-to-text_encoding#Encoding_standards
-const BASE_56_KEY_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz";
+const BASE_56_KEY_CHARS =
+  "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz";
 
 // A 4 character key provides 9.8 million unique keys
 const KEY_LENGTH = 4;
@@ -19,13 +20,17 @@ export const keyRegex = `^(?!.*[0OoIl1])[a-zA-Z0-9]{${KEY_LENGTH}}$`;
 
 /**
  * Create a new key and save it in Cloudflare associated with the provided url
- * 
+ *
  * @param kv Namespace in which to create key/value pair
  * @param url URL to associate with new key
  * @param userProvidedKey Key provided by user. Format already validated.
- * @returns 
+ * @returns
  */
-export const createKey = async (kv: KVNamespace, url: string, userProvidedKey?: string): Promise<string> => {
+export const createKey = async (
+  kv: KVNamespace,
+  url: string,
+  userProvidedKey?: string
+): Promise<string> => {
   let key = "";
   if (userProvidedKey) {
     const result = await kv.get(userProvidedKey);
@@ -33,10 +38,12 @@ export const createKey = async (kv: KVNamespace, url: string, userProvidedKey?: 
       await kv.put(userProvidedKey, url);
       key = userProvidedKey;
     } else {
-      throw new HTTPException(400, { message: "Key already exists" });
+      throw new HTTPException(400, {
+        message: "Short link key already exists",
+      });
     }
   } else {
-    // Generate a key
+    // Generate a key from base 56 character set
     for (let i = 0; i < KEY_LENGTH; i++) {
       const randomIndex = Math.floor(Math.random() * BASE_56_KEY_CHARS.length);
       key += BASE_56_KEY_CHARS.charAt(randomIndex);
@@ -51,12 +58,14 @@ export const createKey = async (kv: KVNamespace, url: string, userProvidedKey?: 
   }
 
   return key;
-}
+};
 
-export const listKeys = async (kv: KVNamespace): Promise<Record<string, string>> => {
+export const listKeys = async (
+  kv: KVNamespace
+): Promise<Record<string, string>> => {
   const keyList = await kv.list();
 
-  const resp: Record<string, string> = {}
+  const resp: Record<string, string> = {};
   for (const key of keyList.keys) {
     const value = await kv.get(key.name);
     if (value) {
@@ -65,12 +74,15 @@ export const listKeys = async (kv: KVNamespace): Promise<Record<string, string>>
   }
 
   return resp;
-}
+};
 
-const queryAnalyticsEngine = async (env: Bindings, sql: string): Promise<object[]> => {
+const queryAnalyticsEngine = async (
+  env: Bindings,
+  sql: string
+): Promise<object[]> => {
   const url = `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/analytics_engine/sql`;
   const resp = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
       Authorization: `Bearer ${env.ANALYTICS_API_TOKEN}`,
     },
@@ -78,7 +90,6 @@ const queryAnalyticsEngine = async (env: Bindings, sql: string): Promise<object[
   });
 
   if (!resp.ok) {
-    console.log('asgaf');
     throw new Error(await resp.text());
   }
 
@@ -86,31 +97,36 @@ const queryAnalyticsEngine = async (env: Bindings, sql: string): Promise<object[
 
   //@ts-expect-error
   return json.data;
-}
+};
 
-const normalizeData = (data: Array<{ key: string, click_count: string}>) => {
+const normalizeData = (data: Array<{ key: string; click_count: string }>) => {
   const normalized: Record<string, number> = {};
   for (const dataPoint of data) {
     normalized[dataPoint.key] = parseInt(dataPoint.click_count);
   }
 
   return normalized;
-}
+};
 
 export const queryClickCounts = async (env: Bindings) => {
   const query = `
           SELECT
             index1 as key,
             sum(_sample_interval) as click_count
-          FROM link_clicks
+          FROM crc_is_link_clicks
           GROUP BY key`;
 
-  const result = await queryAnalyticsEngine(env, query) as Array<{ key: string, click_count: string }>;
+  const result = (await queryAnalyticsEngine(env, query)) as Array<{
+    key: string;
+    click_count: string;
+  }>;
 
   return normalizeData(result);
-}
+};
 
-export const queryLinkStats = async (env: Bindings, key: string) => {
+export const queryLinkStats = async (env: Bindings, key?: string) => {
+  if (!key) return [];
+
   const query = `
           SELECT
             index1 as key,
@@ -118,12 +134,18 @@ export const queryLinkStats = async (env: Bindings, key: string) => {
             blob6 as regionCode,
             blob4 as country,
             sum(_sample_interval) as click_count
-          FROM link_clicks
+          FROM crc_is_link_clicks
           WHERE index1 = '${key}'
           GROUP BY key, city, regionCode, country
           ORDER BY click_count DESC`;
 
-  const result = await queryAnalyticsEngine(env, query) as Array<{ key: string, city: string, regionCode: string, country: string, click_count: string }>;
+  const result = (await queryAnalyticsEngine(env, query)) as Array<{
+    key: string;
+    city: string;
+    regionCode: string;
+    country: string;
+    click_count: string;
+  }>;
 
   return result;
-}
+};

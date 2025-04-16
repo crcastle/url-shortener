@@ -1,28 +1,44 @@
-import { z } from 'zod';
-import { zValidator } from '@hono/zod-validator';
-import { keyRegex } from './cloudflare';
+import { z } from "zod";
+import { zValidator } from "@hono/zod-validator";
+
+const validCharsRegex = new RegExp(/^[a-zA-Z0-9_-]+$/);
 
 const schema = z.object({
   url: z.string().url(),
-  userProvidedKey: z.union([
-    z.string().regex(new RegExp(keyRegex), "Invalid short link characters"),
-    z.literal(''),
-  ]),
+  userProvidedKey: z
+    .string()
+    .regex(
+      validCharsRegex,
+      "Use only letters, digits, underscores, or hyphens in short link."
+    )
+    .optional()
+    .or(z.literal("")),
 });
-  
-export const validator = zValidator('form', schema, (result, c) => {
+
+export const htmlFormValidator = zValidator("form", schema, (result, c) => {
   if (!result.success) {
-    console.log(result.error);
-    return c.render(
-      <div>
-        <h2>Error</h2>
+    return c.html(
+      <blockquote style="background-color: color-mix(in srgb, red 10%, transparent); border-left: 5px solid color-mix(in srgb, red 20%, transparent)">
+        Error(s):
         <ul>
           {result.error.issues.map((issue) => (
             <li>{issue.message}</li>
           ))}
         </ul>
-        <a href="/">Back</a>
-      </div>
+      </blockquote>,
+      400
+    );
+  }
+});
+
+export const jsonValidator = zValidator("json", schema, (result, c) => {
+  if (!result.success) {
+    return c.json(
+      {
+        ok: false,
+        details: result.error.issues,
+      },
+      400
     );
   }
 });
