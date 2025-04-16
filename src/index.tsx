@@ -8,14 +8,12 @@ import { htmlFormValidator } from "./lib/validation";
 import { authMiddleware } from "./lib/middleware";
 import {
   createKey,
-  keyRegex,
   listKeys,
   queryClickCounts,
   queryLinkStats,
 } from "./lib/cloudflare";
 
 import { api } from "./lib/api";
-import { Context } from "hono/jsx";
 import { ContentfulStatusCode } from "hono/utils/http-status";
 
 const app = new Hono<Env>();
