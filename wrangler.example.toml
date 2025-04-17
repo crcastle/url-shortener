@@ -1,0 +1,30 @@
+name = "my-url-shortener"
+compatibility_date = "2025-01-13"
+pages_build_output_dir = "./dist"
+compatibility_flags = ["nodejs_compat"]
+
+# [vars]
+# MY_VAR = "my-variable"
+
+[vars]
+CLOUDFLARE_ACCOUNT_ID = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+[[kv_namespaces]]
+binding = "MY_KV_NAMESPACE"
+id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+[[analytics_engine_datasets]]
+binding = "MY_ANALYTICS_NAMESPACE"
+dataset = "my_analytics_table"
+
+# [[r2_buckets]]
+# binding = "MY_BUCKET"
+# bucket_name = "my-bucket"
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "my-database"
+# database_id = ""
+
+# [ai]
+# binding = "AI"
