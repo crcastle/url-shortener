@@ -54,7 +54,7 @@ export const renderer = jsxRenderer(({ children }) => {
       <body hx-ext="response-targets">
         <header>
           <h1>
-            <a href="/" style="text-decoration: none; color: #555;">
+            <a href="/admin" style="text-decoration: none; color: #555;">
               URL Shortener - crc.is
             </a>
           </h1>
