@@ -5,6 +5,13 @@ export const renderer = jsxRenderer(({ children }) => {
   return (
     <html>
       <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="light dark" />
+        <link
+          rel="stylesheet"
+          href="/node_modules/@picocss/pico/css/pico.min.css"
+        />
         <link
           rel="apple-touch-icon"
           sizes="180x180"
@@ -23,11 +30,6 @@ export const renderer = jsxRenderer(({ children }) => {
           href="/assets/favicon-16x16.png"
         />
         <link rel="manifest" href="/assets/site.webmanifest" />
-        <link rel="stylesheet" href="https://fonts.xz.style/serve/inter.css" />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/@exampledev/new.css@1.1.2/new.min.css"
-        ></link>
         <script
           src="https://unpkg.com/htmx.org@2.0.4"
           integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
@@ -52,15 +54,21 @@ export const renderer = jsxRenderer(({ children }) => {
         `}</Style>
       </head>
       <body hx-ext="response-targets">
-        <header>
+        <header class="container">
           <h1>
             <a href="/admin" style="text-decoration: none; color: #555;">
-              URL Shortener - crc.is
+              URL Shortener
             </a>
           </h1>
         </header>
-        <div id="notification"></div>
-        <div>{children}</div>
+        <main class="container">
+          <section>
+            <div id="notification"></div>
+          </section>
+          <section>
+            <div>{children}</div>
+          </section>
+        </main>
       </body>
     </html>
   );

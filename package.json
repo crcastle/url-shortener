@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.2",
+    "@picocss/pico": "^2.1.1",
     "hono": "^4.6.16",
     "zod": "^3.24.1"
   },

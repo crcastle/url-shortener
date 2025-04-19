@@ -34,7 +34,6 @@ app.get("/", (c) => c.redirect("https://crc.io/"));
 app.get("/admin", authMiddleware, (c) => {
   return c.render(
     <div>
-      <h2>Enter URL to shorten</h2>
       <form
         hx-boost="true"
         action="/links"
@@ -44,25 +43,34 @@ app.get("/admin", authMiddleware, (c) => {
         hx-push-url="false"
         hx-swap="show:none"
       >
+        <fieldset role="group">
+          <input
+            name="url-base"
+            value="https://crc.is/"
+            style="width: 8rem;"
+            readonly
+          />
+          <input
+            type="text"
+            name="userProvidedKey"
+            autocomplete="off"
+            spellcheck={false}
+            placeholder="Slug"
+            aria-describedBy="key-helper"
+          />
+        </fieldset>
+        <small id="key-helper" style="padding-left: 9rem;">
+          Optional. Four random characters are generated if left blank.
+        </small>
+        <div>
+          <h2 style="text-align: center;">↓</h2>
+        </div>
         <input
-          type="text"
-          name="userProvidedKey"
-          autocomplete="off"
-          spellcheck={false}
-          placeholder="optional"
-          style={{
-            width: "15%",
-          }}
-        />
-        &nbsp;&nbsp;→&nbsp;&nbsp;
-        <input
-          type="text"
+          type="url"
           name="url"
           autocomplete="off"
           placeholder="Destination URL"
-          style={{
-            width: "65%",
-          }}
+          required
         />
         &nbsp;
         <button type="submit">Create</button>
@@ -85,42 +93,46 @@ app.get("/links", authMiddleware, async (c) => {
   const clicks = await queryClickCounts(c.env);
 
   return c.html(
-    <table>
-      <caption>Live Short URLs</caption>
-      <thead>
-        <tr>
-          <th>Short URL</th>
-          <th>Redirects to</th>
-          <th>Clicks</th>
-        </tr>
-      </thead>
-      <tbody>
-        {Object.entries(pairs).map(([key, value]) => {
-          return (
-            <>
-              <tr
-                key={key}
-                hx-get={"/links/" + key}
-                hx-trigger="click"
-                hx-target="next div"
-                hx-swap="outerHTML"
-              >
-                <td>
-                  <a href={"/" + key}>{key}</a>
-                </td>
-                <td>{value}</td>
-                <td>{clicks[key] ?? 0}</td>
-              </tr>
-              <tr>
-                <td colspan={3} style="padding-top: 0; padding-bottom: 0;">
-                  <div id={"panel-" + key} class="panel"></div>
-                </td>
-              </tr>
-            </>
-          );
-        })}
-      </tbody>
-    </table>
+    <>
+      <h3>Live Short URLs</h3>
+      <table class="striped">
+        <thead>
+          <tr>
+            <th scope="col" style="width: 10rem;">
+              Short URL Slug
+            </th>
+            <th scope="col">Redirects to</th>
+            <th scope="col">Clicks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(pairs).map(([key, value]) => {
+            return (
+              <>
+                <tr
+                  key={key}
+                  hx-get={"/links/" + key}
+                  hx-trigger="click"
+                  hx-target="next div"
+                  hx-swap="outerHTML"
+                >
+                  <td>
+                    <a href={"/" + key}>{key}</a>
+                  </td>
+                  <td>{value}</td>
+                  <td>{clicks[key] ?? 0}</td>
+                </tr>
+                <tr>
+                  <td colspan={3} style="padding-top: 0; padding-bottom: 0;">
+                    <div id={"panel-" + key} class="panel"></div>
+                  </td>
+                </tr>
+              </>
+            );
+          })}
+        </tbody>
+      </table>
+    </>
   );
 });
 

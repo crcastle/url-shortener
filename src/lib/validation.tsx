@@ -9,7 +9,7 @@ const schema = z.object({
     .string()
     .regex(
       validCharsRegex,
-      "Use only letters, digits, underscores, or hyphens in short link."
+      "Use only letters, digits, underscores, or hyphens in short link slug."
     )
     .optional()
     .or(z.literal("")),
