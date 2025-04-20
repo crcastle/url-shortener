@@ -47,7 +47,7 @@ app.get("/admin", authMiddleware, (c) => {
           <input
             name="url-base"
             value="https://crc.is/"
-            style="width: 7rem; background-color: #333; padding-right: 0px !important; overflow: visible; color: #eee;"
+            style="width: 6.5rem; background-color: #333; padding-right: 0.25rem; padding-left: 0.25rem; overflow: visible; color: #eee; border-color: #333;"
             readonly
           />
           <input
@@ -59,7 +59,7 @@ app.get("/admin", authMiddleware, (c) => {
             aria-describedBy="key-helper"
           />
         </fieldset>
-        <small id="key-helper" style="padding-left: 9rem;">
+        <small id="key-helper" style="padding-left: 7.5rem;">
           Optional. If left blank, four random characters are used.
         </small>
         <div>
