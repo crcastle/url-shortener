@@ -8,10 +8,7 @@ export const renderer = jsxRenderer(({ children }) => {
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="light dark" />
-        <link
-          rel="stylesheet"
-          href="/node_modules/@picocss/pico/css/pico.min.css"
-        />
+        <link rel="stylesheet" href="/assets/pico.min.css" />
         <link
           rel="apple-touch-icon"
           sizes="180x180"

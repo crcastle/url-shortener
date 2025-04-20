@@ -3,9 +3,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run get-pico && vite build",
     "preview": "wrangler pages dev",
-    "deploy": "npm run build && wrangler pages deploy"
+    "deploy": "npm run build && wrangler pages deploy",
+    "get-pico": "cp node_modules/@picocss/pico/css/pico.min.css public/assets/"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.2",
