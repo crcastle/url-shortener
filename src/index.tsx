@@ -47,7 +47,7 @@ app.get("/admin", authMiddleware, (c) => {
           <input
             name="url-base"
             value="https://crc.is/"
-            style="width: 8rem;"
+            style="width: 7rem; background-color: #333; padding-right: 0px !important; overflow: visible; color: #eee;"
             readonly
           />
           <input
@@ -60,7 +60,7 @@ app.get("/admin", authMiddleware, (c) => {
           />
         </fieldset>
         <small id="key-helper" style="padding-left: 9rem;">
-          Optional. Four random characters are generated if left blank.
+          Optional. If left blank, four random characters are used.
         </small>
         <div>
           <h2 style="text-align: center;">↓</h2>
